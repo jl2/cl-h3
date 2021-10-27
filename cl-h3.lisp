@@ -29,7 +29,7 @@
 (cffi:use-foreign-library h3-lib)
 
 (autowrap:c-include
- #+darwin"/opt/local/include/gdal.h"
+ #+darwin"/usr/local/include/h3/h3api.h"
  #+linux"h3/h3api.h"
  :sysincludes (list #+linux"/usr/include/x86_64-linux-gnu/"
                     #+linux"/usr/include/x86_64-linux-gnu/c++/9/"
@@ -65,9 +65,9 @@
 
 (declaim (inline clh3i:grid-distance))
 (defun grid-distance (a b)
-  (autowrap:with-many-alloc ((dist 'clh3i:int64-t))
+  (autowrap:with-many-alloc ((dist 'clh3i:uint64-t))
     (clh3i:grid-distance a b dist)
-    (cffi:mem-ref dist :int64)))
+    (cffi:mem-ref dist :uint64)))
 
 (defun cell-to-lat-lng (cell)
   (autowrap:with-many-alloc ((geo 'clh3i:lat-lng))
@@ -116,3 +116,19 @@ Returns the great-circle distance in kilometers."
                          (* dy dy)
                          (* dz dz)))
                 2)))))
+
+
+(defun max-grid-disk-size (k)
+  (clh3i::max-grid-disk-size k))
+
+(defun grid-disk (index k)
+  (let ((max-neighbors (max-grid-disk-size k)))
+    (autowrap:with-alloc (neighbors 'clh3i:h3index max-neighbors)
+      (loop for i below max-neighbors do
+        (setf (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i)) 0))
+      (clh3i::grid-disk index k neighbors)
+      (loop
+        for i upto max-neighbors
+        for neigh = (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i))
+        when (not (zerop neigh))
+          collect neigh))))

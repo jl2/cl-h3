@@ -20,7 +20,58 @@
   (:nicknames #:h3)
 
   (:use #:cl #:j-utils #:alexandria)
-  (:export #:grid-distance
+  (:export
+   #:lat-lng-to-cell
+   #:cell-to-lat-lng
+   #:cell-to-boundary
+   #:grid-disk
+   #:grid-disk-distances
+   #:grid-ring-unsafe
+   #:polygon-to-cells
+   #:h3-set-to-multi-polygon
+   #:degs-to-rads
+   #:rads-to-degs
+   #:distance
+   #:get-hexagon-area-avg
+   #:cell-area
+   #:get-hexagon-edge-length-avg
+   #:exact-edge-length
+   #:get-num-cells
+   #:get-res-0-cells
+   #:get-pentagons
+   #:get-resolution
+   #:get-base-cell-number
+   #:string-to-h3
+   #:h3-to-string
+   #:is-valid-cell
+   #:cell-to-parent
+   #:cell-to-children
+   #:cell-to-center-child
+   #:compact-cells
+   #:uncompact-cells
+   #:is-res-class-iii
+   #:is-pentagon
+   #:get-icosahedron-faces
+   #:are-neighbor-cells
+   #:cells-to-directed-edge
+   #:is-valid-directed-edge
+   #:get-directed-edge-origin
+   #:get-directed-edge-destination
+   #:directed-edge-to-cells
+   #:origin-to-directed-edges
+   #:directed-edge-to-boundary
+   #:cell-to-vertex
+   #:cell-to-vertexes
+   #:vertex-to-lat-lng
+   #:is-valid-vertex
+   #:grid-distance
+   #:grid-path-cells
+   #:experimental-h3-to-local-ij
+   #:experimental-local-ij-to-h3
+
+
+
+   #:grid-distance
            #:cell-to-lat-lng
            #:cell-to-lat-lng-degrees
            #:cells-to-directed-edge
@@ -29,4 +80,6 @@
            #:rad2deg
            #:deg2rad
            #:haversine-distance
+           #:grid-disk
+           #:max-grid-disk-size
            ))

@@ -30,7 +30,7 @@
 (defun fnear (a b &optional (eps 0.0001))
   (< (abs (- b a)) eps))
 
-(test distance
+(test distance-test
   (let ((cell1 #16r8f2830828052d25)
         (cell2 #16r8f283082a30e623))
   (is (= 2340
@@ -59,14 +59,14 @@
            hav-diff)
            ))))))
 
-(test edge
+(test edge-test
   (let* ((origin      #16r8a2a1072b59ffff)
          (destination #16r8a2a1072b597fff)
 
          (edge (h3:cells-to-directed-edge origin destination))
          (pts (h3:directed-edge-to-boundary edge))
-         (expected '((40.69005860095358 . -74.04415176176158)
-                    (40.68990769452519 . -74.0450617923963))))
+         (expected '((40.69005860095358d0 . -74.04415176176158d0)
+                    (40.68990769452519d0 . -74.0450617923963d0))))
     (loop
       for pt in pts
       do
@@ -79,3 +79,13 @@
            (is (not (null lat-found)))
            (is (not (null lng-found)))))))
 
+(test neighbors-tets
+  (let* ((indexed #16R8a2a1072b59ffff)
+         (k 2)
+         (max-neighbors (h3:max-grid-disk-size k))
+         (neighbors (h3:grid-disk indexed k)))
+    (format t "Max neighbors size ~a: ~a~%" k max-neighbors)
+    (format t "Real neighbors size ~a~%" (length neighbors))
+    (format t "Neighbors to ~x:~%" indexed)
+    (loop for neigh in neighbors do
+      (format t "    ~x distance ~a~%" neigh (h3:grid-distance indexed neigh)))))
