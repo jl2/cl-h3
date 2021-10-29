@@ -55,11 +55,11 @@
 
     (is (= 2340 grid-dist))
 
-    (is (fnear 37.77523588 lat1))
-    (is (fnear -122.419755 lng1))
+    (is (fnear 37.77523588d0 lat1))
+    (is (fnear -122.419755d0 lng1))
 
-    (is (fnear lat2 37.7899905289064))
-    (is (fnear lng2 -122.40212077170318))
+    (is (fnear lat2 37.7899905289064d0))
+    (is (fnear lng2 -122.40212077170318d0))
     (is (fnear 2.256853 hav-diff))
     ))
 
@@ -116,8 +116,8 @@
     (is (null expected))))
 
 (test index-test
-  (let* ((lat (h3:degs-to-rads 40.689167))
-         (lng (h3:degs-to-rads -74.044444))
+  (let* ((lat (h3:degs-to-rads 40.689167d0))
+         (lng (h3:degs-to-rads -74.044444d0))
          (resolution 10)
          (indexed (h3:lat-lng-to-cell lat lng resolution))
          (boundary (h3:cell-to-boundary indexed))

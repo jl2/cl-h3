@@ -149,15 +149,68 @@
 (setf (symbol-function 'exact-edge-length-km) (symbol-function 'clh3i::exact-edge-length-km))
 (setf (symbol-function 'exact-edge-length-rads) (symbol-function 'clh3i::exact-edge-length-rads))
 
-;; Functions from H3 that are directly exported.
-;; There must be a better way to export these directly from clh3i...
-(setf (symbol-function 'rads-to-degs) (symbol-function 'clh3i::rads-to-degs))
+(defun experimental-h3-to-local-ij (origin pt2)
+  (autowrap:with-many-alloc ((res 'clh3i::coord-ij))
+    (clh3i::experimental-h3to-local-ij origin pt2 res)
+    (cons (clh3i::coord-ij.i res)
+          (clh3i::coord-ij.j res))))
 
+(defun experimental-local-ij-to-h3 (origin ci cj)
+  (autowrap:with-many-alloc ((cij 'clh3i::coord-ij)
+                             (res 'clh3i::h3index))
+    (setf (clh3i::coord-ij.i cij) ci)
+    (setf (clh3i::coord-ij.j cij) cj)
+    (clh3i::experimental-local-ij-to-h3 origin cij res)
+    (cffi:mem-ref res :uint64 0)
+    ))
+
+(setf (symbol-function 'get-base-cell-number) (symbol-function 'clh3i::get-base-cell-number))
+(setf (symbol-function 'get-directed-edge-destination) (symbol-function 'clh3i::get-directed-edge-destination))
+(setf (symbol-function 'get-directed-edge-origin) (symbol-function 'clh3i::get-directed-edge-origin))
+
+(setf (symbol-function 'get-hexagon-area-avg-km2) (symbol-function 'clh3i::get-hexagon-area-avg-km2))
+(setf (symbol-function 'get-hexagon-area-avg-m2) (symbol-function 'clh3i::get-hexagon-area-avg-m2))
+(setf (symbol-function 'get-hexagon-edge-length-avg-km) (symbol-function 'clh3i::get-hexagon-edge-length-avg-km))
+(setf (symbol-function 'get-hexagon-edge-length-avg-m) (symbol-function 'clh3i::get-hexagon-edge-length-avg-m))
+
+
+(defun get-icosahedron-faces (edge)
+  (autowrap:with-many-alloc ((face-count 'clh3i::uint64-t))
+    (setf (cffi:mem-ref face-count :uint64 0) 0)
+    (clh3i::max-face-count edge face-count)
+    (let ((max-face-count (cffi:mem-ref face-count :uint64)))
+      (autowrap:with-many-alloc ((faces 'clh3i::uint64-t max-face-count))
+        (clh3i::get-icosahedron-faces edge faces)
+        (loop for i below max-face-count
+              for offset = (* (cffi:foreign-type-size :uint64) i)
+              when (>= (cffi:mem-ref faces :uint64 offset) 0)
+                collect (cffi:mem-ref faces :uint64 offset))))))
+                
+(setf (symbol-function 'get-num-cells) (symbol-function 'clh3i::get-num-cells))
+
+(defun get-pentagon-count ()
+  (clh3i::pentagon-count))
+
+(defun get-pentagons (res)
+  (autowrap:with-many-alloc ((pentagons 'clh3i::h3index (clh3i::pentagon-count)))
+    (clh3i::get-pentagons res pentagons)
+    (loop for i below (clh3i::pentagon-count)
+          for offset = (* (cffi:foreign-type-size :uint64) i)
+          collect (cffi:mem-ref pentagons :uint64 offset))))
+
+(defun get-res-0-cell-count ()
+  (clh3i::res0cell-count))
+
+(defun get-res-0-cells ()
+  (autowrap:with-many-alloc ((cells 'clh3i::h3index (clh3i::res0cell-count)))
+    (clh3i:get-res0cells cells)
+    (loop for i below (clh3i::res0cell-count)
+          for offset = (* (cffi:foreign-type-size :uint64) i)
+          collect (cffi:mem-ref cells :uint64 offset))))
+
+(setf (symbol-function 'get-resolution) (symbol-function 'clh3i::get-resolution))
 
 (setf (symbol-function 'max-grid-disk-size) (symbol-function 'clh3i::max-grid-disk-size))
-
-
-;; Functions that wrap clh3i functions to hide memory allocation or iterating over collections.
 
 (defun grid-disk (index k)
   (let ((max-neighbors (max-grid-disk-size k)))
@@ -171,11 +224,65 @@
         when (not (zerop neigh))
           collect neigh))))
 
+(defun grid-disk-distances (origin k)
+  (let ((max-neighbors (max-grid-disk-size k)))
+    (autowrap:with-many-alloc ((neighbors 'clh3i:h3index max-neighbors)
+                               (distances :int max-neighbors))
+      (loop
+        for i below max-neighbors
+        for offset64 = (* (cffi:foreign-type-size :uint64) i)
+        for offset32 = (* (cffi:foreign-type-size :int) i)
+        do
+           (setf (cffi:mem-ref neighbors :uint64 offset64) 0)
+           (setf (cffi:mem-ref distances :int offset32) 0))
+      (clh3i::grid-disk-distances origin k neighbors distances)
+      (loop
+        for i below max-neighbors
+        for offset64 = (* (cffi:foreign-type-size :uint64) i)
+        for offset32 = (* (cffi:foreign-type-size :int) i)
+        for neigh = (cffi:mem-ref neighbors :uint64 offset64)
+        for dist =  (cffi:mem-ref distances :int offset32)
+        when (not (zerop neigh))
+          collect (cons neigh dist)))))
 
 (defun grid-distance (a b)
   (autowrap:with-many-alloc ((dist 'clh3i:uint64-t))
     (clh3i:grid-distance a b dist)
     (cffi:mem-ref dist :uint64)))
+
+(defun grid-path-cells-size (start end)
+  (autowrap:with-alloc (max-cells 'clh3i:int64-t)
+    (clh3i::grid-path-cells-size start end max-cells)
+    (cffi::mem-ref max-cells :int64 0)))
+  
+(defun grid-path-cells (start end)
+  (let ((max-path-size (grid-path-cells-size start end)))
+    (autowrap:with-alloc (cells 'clh3i:h3index max-path-size)
+      (loop
+        for i below max-path-size
+        for offset = (* (cffi:foreign-type-size :uint64) i)
+        for cell = (cffi:mem-ref cells :uint64 offset)
+        when (not (zerop cell))
+          collect cell))))
+
+(defun grid-ring-unsafe (index k)
+  (let ((max-cells (if (zerop k) 1 (* 6 k))))
+    (autowrap:with-alloc (cells 'clh3i:h3index max-cells)
+      (loop for i below max-cells do
+        (setf (cffi:mem-ref cells :uint64 (* (cffi:foreign-type-size :uint64) i)) 0))
+      (clh3i::grid-disk index k cells)
+      (loop
+        for i below max-cells
+        for cell = (cffi:mem-ref cells :uint64 (* (cffi:foreign-type-size :uint64) i))
+        when (not (zerop cell))
+          collect cell))))
+
+(setf (symbol-function 'is-pentagon) (symbol-function 'clh3i::is-pentagon))
+(setf (symbol-function 'is-valid-cell) (symbol-function 'clh3i::is-valid-cell))
+(setf (symbol-function 'is-res-class-iii) (symbol-function 'clh3i::is-res-class-iii))
+(setf (symbol-function 'is-valid-directed-edge) (symbol-function 'clh3i::is-valid-directed-edge))
+(setf (symbol-function 'is-valid-vertex) (symbol-function 'clh3i::is-valid-vertex))
+
 
 (defun lat-lng-to-cell (lat lng resolution)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng)
@@ -185,6 +292,7 @@
     (clh3i:lat-lng-to-cell geo resolution index)
     (cffi:mem-ref index :uint64)))
 
+(setf (symbol-function 'rads-to-degs) (symbol-function 'clh3i::rads-to-degs))
 
 
 (defun haversine-distance (th1 ph1 th2 ph2)

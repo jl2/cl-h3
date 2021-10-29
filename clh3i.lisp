@@ -49,7 +49,6 @@
                     #+darwin"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/")
  :spec-path '(cl-h3 specs)
  :trace-c2ffi t
- :symbol-exceptions (("experimentalH3ToLocalIj" . "experimental-h3-to-local-ij"))
  :exclude-definitions
  ("^va_list$"
   "Random" "Signal" "long-double"

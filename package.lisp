@@ -37,19 +37,25 @@
    #:degs-to-rads
    #:directed-edge-to-boundary
    #:directed-edge-to-cells
-   #:distance
+   #:distance-m
+   #:distance-km
+   #:distance-rads
    #:exact-edge-length
    #:experimental-h3-to-local-ij
    #:experimental-local-ij-to-h3
    #:get-base-cell-number
    #:get-directed-edge-destination
    #:get-directed-edge-origin
-   #:get-hexagon-area-avg
-   #:get-hexagon-edge-length-avg
+   #:get-hexagon-area-avg-m2
+   #:get-hexagon-area-avg-km2
+   #:get-hexagon-edge-length-avg-m
+   #:get-hexagon-edge-length-avg-km
    #:get-icosahedron-faces
    #:get-num-cells
    #:get-pentagons
+   #:get-pentagon-count
    #:get-res-0-cells
+   #:get-res-0-cell-count
    #:get-resolution
    #:grid-disk
    #:grid-disk-distances
