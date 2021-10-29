@@ -2,7 +2,6 @@
 ;;
 ;; Copyright (c) 2021 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
 
-
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
 ;; copyright notice and this permission notice appear in all copies.
@@ -15,82 +14,94 @@
 ;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(defpackage :clh3i
-  (:nicknames)
-  (:use #:cl #:j-utils #:alexandria)
-  (:export)
-  )
-(in-package :clh3i)
 
-(cffi:define-foreign-library h3-lib
-    (:darwin (:or "libh3.dylib" "libh3"))
-    (:unix (:or "libh3.so" "libh3.so.1" "libh3" "h3"))
-    (t (:default "libh3")))
-(cffi:use-foreign-library h3-lib)
-
-(autowrap:c-include
- #+darwin"/usr/local/include/h3/h3api.h"
- #+linux"h3/h3api.h"
- :sysincludes (list #+linux"/usr/include/x86_64-linux-gnu/"
-                    #+linux"/usr/include/x86_64-linux-gnu/c++/9/"
-                    #+darwin"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/")
- :spec-path '(cl-h3 specs)
-
- :trace-c2ffi t
-
- :exclude-definitions ("^va_list$" "Random" "Signal" "long-double"
-                                   "^acos$" "^asin$" "^atan$" "^cos$" "^sin$" "^tan$"
-                                   "^log$" "^exp$" "^acosh$" "^cosh$" "^asinh$" "^sinh$"
-                                   "^tanh$" "^atanh$"  "^sqrt$" "^floor$" "^round$"
-                                   "^time$" "^close$" "^open$" "^read$" "^write$"
-                                   "^sleep$" "^truncate$" "^ceil$"
-                                   "^abs$" "^abort$" "^random$" "^remove$" "^signal$")
- ;; :symbol-regex (("^GDAL_(.*)$" () "\\1")
- ;;                ("^Gdal(.*)$" () "\\1")
- ;;                ("^gdal(.*)$" () "\\1")
- ;;                ("^(OGR.*)$" () "\\1")
- ;;                ("^(Ogr.*)$" () "\\1")
- ;;                ("^(ogr.*)$" () "\\1"))
- )
 (in-package :cl-h3)
 
-(declaim (inline grid-distance cell-to-lat-lng cell-to-lat-lng-degrees
-                 cells-to-directed-edge
-                 rad2deg deg2rad))
-(defun rad2deg (rad)
-  (clh3i:rads-to-degs rad))
+(setf (symbol-function 'are-neighbor-cells) (symbol-function 'clh3i::are-neighbor-cells))
 
-(defun deg2rad (deg)
-  (clh3i:degs-to-rads deg))
+(setf (symbol-function 'cell-area-m2) (symbol-function 'clh3i::cell-area-m2))
+(setf (symbol-function 'cell-area-km2) (symbol-function 'clh3i::cell-area-km2))
+(setf (symbol-function 'cell-area-rads2) (symbol-function 'clh3i::cell-area-rads2))
 
-(declaim (inline clh3i:grid-distance))
-(defun grid-distance (a b)
-  (autowrap:with-many-alloc ((dist 'clh3i:uint64-t))
-    (clh3i:grid-distance a b dist)
-    (cffi:mem-ref dist :uint64)))
+(defun cell-to-boundary (index)
+  (autowrap:with-many-alloc ((cell-bound 'clh3i:cell-boundary))
+    (clh3i:cell-to-boundary index cell-bound)
+    (loop
+      with num-verts = (clh3i:cell-boundary.num-verts cell-bound)
+      for i below num-verts
+      ;; TODO: Learn why this is (* 2 i)
+      for ll = (clh3i:cell-boundary.verts[] cell-bound (* 2 i))
+      collecting (cons (clh3i:lat-lng.lat ll)
+                       (clh3i:lat-lng.lng ll)))))
+
+(setf (symbol-function 'cell-to-center-child)
+      (symbol-function 'clh3i::cell-to-center-child))
+
+(defun cell-to-children (index res)
+  (autowrap:with-many-alloc ((child-count 'clh3i::uint64-t))
+    (clh3i::cell-to-children-size index res child-count)
+    (let ((child-count (cffi:mem-ref child-count :uint64)))
+      (autowrap:with-many-alloc ((children 'clh3i::uint64-t child-count))
+        (clh3i:cell-to-children index res children)
+        (loop
+          for i below child-count
+          collecting (cffi:mem-ref children :uint64 (* (cffi:foreign-type-size :uint64) i)))))))
 
 (defun cell-to-lat-lng (cell)
   (autowrap:with-many-alloc ((geo 'clh3i:lat-lng))
     (clh3i:cell-to-lat-lng cell geo)
-    (values (clh3i:lat-lng.lat geo)
-            (clh3i:lat-lng.lng geo))))
+    (cons (clh3i:lat-lng.lat geo)
+          (clh3i:lat-lng.lng geo))))
 
-(declaim (inline clh3i:cell-to-lat-lng clh3i:rads-to-degs))
 (defun cell-to-lat-lng-degrees (cell)
-  (autowrap:with-many-alloc ((geo 'clh3i:lat-lng))
+  (autowrap:with-many-alloc ((geo 'clh3i::lat-lng))
     (clh3i:cell-to-lat-lng cell geo)
-    (values (clh3i:rads-to-degs (clh3i:lat-lng.lat geo))
-            (clh3i:rads-to-degs (clh3i:lat-lng.lng geo)))))
+    (cons (clh3i:rads-to-degs (clh3i:lat-lng.lat geo))
+          (clh3i:rads-to-degs (clh3i:lat-lng.lng geo)))))
 
-(declaim (inline clh3i:cells-to-directed-edge))
-(defun cells-to-directed-edge (a b)
-  (clh3i:cells-to-directed-edge a b))
+(defun cell-to-parent (cell parent-res)
+  (autowrap:with-many-alloc ((parent 'clh3i::uint64-t))
+    (clh3i:cell-to-parent cell parent-res parent)
+    (cffi:mem-ref parent :uint64)))
 
-(declaim (inline clh3i:directed-edge-to-boundary
-                 clh3i:cell-boundary.num-verts
-                 clh3i:cell-boundary.verts[]
-                 clh3i:lat-lng.lat
-                 clh3i:lat-lng.lng))
+(defun cell-to-vertex (cell vertex-num)
+  (autowrap:with-many-alloc ((vertex 'clh3i::uint64-t))
+    (clh3i:cell-to-vertex cell vertex-num vertex)
+    (cffi:mem-ref vertex :uint64)))
+
+(defun cell-to-vertexes (cell)
+  (autowrap:with-many-alloc ((vertexes 'clh3i::uint64-t 6))
+    (clh3i:cell-to-vertexes cell vertexes)
+    (loop
+      for i below 6
+          collecting (cffi:mem-ref vertexes :uint64
+                                   (* (cffi:foreign-type-size :uint64) i)))))
+
+(setf (symbol-function 'cells-to-directed-edge) (symbol-function 'clh3i::cells-to-directed-edge))
+
+(defun compact-cells (cells)
+  (let ((count (length cells)))
+    (autowrap:with-many-alloc ((in-set 'clh3i::int64-t count)
+                               (out-set 'clh3i::int64-t count))
+      (loop
+        for i below count
+        for idx in cells
+        for offset = (* (cffi:foreign-type-size :uint64) i)
+        do
+           (setf (cffi:mem-ref in-set :uint64 offset) idx)
+           (setf (cffi:mem-ref out-set :uint64 offset) 0))
+
+      (clh3i:compact-cells in-set out-set count)
+
+      (loop
+        for i below count
+        for offset = (* (cffi:foreign-type-size :uint64) i)
+        for val = (cffi:mem-ref in-set :uint64 offset)
+        when (not (zerop val))
+          collect val))))
+
+(setf (symbol-function 'degs-to-rads) (symbol-function 'clh3i::degs-to-rads))
+
 (defun directed-edge-to-boundary (edge)
   (autowrap:with-many-alloc ((cell-bound 'clh3i:cell-boundary))
     (clh3i:directed-edge-to-boundary edge cell-bound)
@@ -101,6 +112,80 @@
       for ll = (clh3i:cell-boundary.verts[] cell-bound (* 2 i))
       collecting (cons (clh3i:lat-lng.lat ll)
                        (clh3i:lat-lng.lng ll)))))
+
+(defun directed-edge-to-cells (edge)
+  (autowrap:with-many-alloc ((origin-destination 'clh3i:uint64-t 2))
+    (clh3i:directed-edge-to-cells edge origin-destination)
+    (cons (cffi:mem-ref origin-destination :uint64 0)
+          (cffi:mem-ref origin-destination :uint64 (cffi:foreign-type-size :uint64)))))
+
+
+(defun distance-m (lat1 lng1 lat2 lng2)
+  (autowrap:with-many-alloc ((a 'clh3i::lat-lng)
+                             (b 'clh3i::lat-lng))
+    (setf (clh3i:lat-lng.lat a) lat1)
+    (setf (clh3i:lat-lng.lng a) lng1)
+    (setf (clh3i:lat-lng.lat b) lat2)
+    (setf (clh3i:lat-lng.lng b) lng2)
+    (clh3i:distance-m a b)))
+(defun distance-km (lat1 lng1 lat2 lng2)
+  (autowrap:with-many-alloc ((a 'clh3i::lat-lng)
+                             (b 'clh3i::lat-lng))
+    (setf (clh3i:lat-lng.lat a) lat1)
+    (setf (clh3i:lat-lng.lng a) lng1)
+    (setf (clh3i:lat-lng.lat b) lat2)
+    (setf (clh3i:lat-lng.lng b) lng2)
+    (clh3i:distance-km a b)))
+(defun distance-rads (lat1 lng1 lat2 lng2)
+  (autowrap:with-many-alloc ((a 'clh3i::lat-lng)
+                             (b 'clh3i::lat-lng))
+    (setf (clh3i:lat-lng.lat a) lat1)
+    (setf (clh3i:lat-lng.lng a) lng1)
+    (setf (clh3i:lat-lng.lat b) lat2)
+    (setf (clh3i:lat-lng.lng b) lng2)
+    (clh3i:distance-km a b)))
+
+(setf (symbol-function 'exact-edge-length-m) (symbol-function 'clh3i::exact-edge-length-m))
+(setf (symbol-function 'exact-edge-length-km) (symbol-function 'clh3i::exact-edge-length-km))
+(setf (symbol-function 'exact-edge-length-rads) (symbol-function 'clh3i::exact-edge-length-rads))
+
+;; Functions from H3 that are directly exported.
+;; There must be a better way to export these directly from clh3i...
+(setf (symbol-function 'rads-to-degs) (symbol-function 'clh3i::rads-to-degs))
+
+
+(setf (symbol-function 'max-grid-disk-size) (symbol-function 'clh3i::max-grid-disk-size))
+
+
+;; Functions that wrap clh3i functions to hide memory allocation or iterating over collections.
+
+(defun grid-disk (index k)
+  (let ((max-neighbors (max-grid-disk-size k)))
+    (autowrap:with-alloc (neighbors 'clh3i:h3index max-neighbors)
+      (loop for i below max-neighbors do
+        (setf (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i)) 0))
+      (clh3i::grid-disk index k neighbors)
+      (loop
+        for i below max-neighbors
+        for neigh = (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i))
+        when (not (zerop neigh))
+          collect neigh))))
+
+
+(defun grid-distance (a b)
+  (autowrap:with-many-alloc ((dist 'clh3i:uint64-t))
+    (clh3i:grid-distance a b dist)
+    (cffi:mem-ref dist :uint64)))
+
+(defun lat-lng-to-cell (lat lng resolution)
+  (autowrap:with-many-alloc ((geo 'clh3i::lat-lng)
+                             (index 'clh3i::h3index))
+    (setf (clh3i:lat-lng.lat geo) lat)
+    (setf (clh3i:lat-lng.lng geo) lng)
+    (clh3i:lat-lng-to-cell geo resolution index)
+    (cffi:mem-ref index :uint64)))
+
+
 
 (defun haversine-distance (th1 ph1 th2 ph2)
   "Find the great circle distance between two points on a sphere.
@@ -116,19 +201,3 @@ Returns the great-circle distance in kilometers."
                          (* dy dy)
                          (* dz dz)))
                 2)))))
-
-
-(defun max-grid-disk-size (k)
-  (clh3i::max-grid-disk-size k))
-
-(defun grid-disk (index k)
-  (let ((max-neighbors (max-grid-disk-size k)))
-    (autowrap:with-alloc (neighbors 'clh3i:h3index max-neighbors)
-      (loop for i below max-neighbors do
-        (setf (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i)) 0))
-      (clh3i::grid-disk index k neighbors)
-      (loop
-        for i upto max-neighbors
-        for neigh = (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i))
-        when (not (zerop neigh))
-          collect neigh))))

@@ -21,65 +21,55 @@
 
   (:use #:cl #:j-utils #:alexandria)
   (:export
-   #:lat-lng-to-cell
-   #:cell-to-lat-lng
-   #:cell-to-boundary
-   #:grid-disk
-   #:grid-disk-distances
-   #:grid-ring-unsafe
-   #:polygon-to-cells
-   #:h3-set-to-multi-polygon
-   #:degs-to-rads
-   #:rads-to-degs
-   #:distance
-   #:get-hexagon-area-avg
-   #:cell-area
-   #:get-hexagon-edge-length-avg
-   #:exact-edge-length
-   #:get-num-cells
-   #:get-res-0-cells
-   #:get-pentagons
-   #:get-resolution
-   #:get-base-cell-number
-   #:string-to-h3
-   #:h3-to-string
-   #:is-valid-cell
-   #:cell-to-parent
-   #:cell-to-children
-   #:cell-to-center-child
-   #:compact-cells
-   #:uncompact-cells
-   #:is-res-class-iii
-   #:is-pentagon
-   #:get-icosahedron-faces
    #:are-neighbor-cells
-   #:cells-to-directed-edge
-   #:is-valid-directed-edge
-   #:get-directed-edge-origin
-   #:get-directed-edge-destination
-   #:directed-edge-to-cells
-   #:origin-to-directed-edges
-   #:directed-edge-to-boundary
+   #:cell-area
+   #:cell-to-boundary
+   #:cell-to-center-child
+   #:cell-to-children
+   #:cell-to-lat-lng
+   #:cell-to-lat-lng-degrees
+   #:cell-to-parent
    #:cell-to-vertex
    #:cell-to-vertexes
-   #:vertex-to-lat-lng
-   #:is-valid-vertex
-   #:grid-distance
-   #:grid-path-cells
+   #:cells-to-directed-edge
+   #:cells-to-directed-edge
+   #:compact-cells
+   #:degs-to-rads
+   #:directed-edge-to-boundary
+   #:directed-edge-to-cells
+   #:distance
+   #:exact-edge-length
    #:experimental-h3-to-local-ij
    #:experimental-local-ij-to-h3
-
-
-
+   #:get-base-cell-number
+   #:get-directed-edge-destination
+   #:get-directed-edge-origin
+   #:get-hexagon-area-avg
+   #:get-hexagon-edge-length-avg
+   #:get-icosahedron-faces
+   #:get-num-cells
+   #:get-pentagons
+   #:get-res-0-cells
+   #:get-resolution
+   #:grid-disk
+   #:grid-disk-distances
    #:grid-distance
-           #:cell-to-lat-lng
-           #:cell-to-lat-lng-degrees
-           #:cells-to-directed-edge
-           #:directed-edge-to-boundary
-           #:directed-edge-to-boundary-degrees
-           #:rad2deg
-           #:deg2rad
-           #:haversine-distance
-           #:grid-disk
-           #:max-grid-disk-size
+   #:grid-path-cells
+   #:grid-ring-unsafe
+   #:h3-set-to-multi-polygon
+   #:h3-to-string
+   #:haversine-distance
+   #:is-pentagon
+   #:is-res-class-iii
+   #:is-valid-cell
+   #:is-valid-directed-edge
+   #:is-valid-vertex
+   #:lat-lng-to-cell
+   #:max-grid-disk-size
+   #:origin-to-directed-edges
+   #:polygon-to-cells
+   #:rads-to-degs
+   #:string-to-h3
+   #:uncompact-cells
+   #:vertex-to-lat-lng
            ))

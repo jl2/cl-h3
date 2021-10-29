@@ -31,33 +31,37 @@
   (< (abs (- b a)) eps))
 
 (test distance-test
-  (let ((cell1 #16r8f2830828052d25)
-        (cell2 #16r8f283082a30e623))
-  (is (= 2340
-         (h3:grid-distance cell1
-                              cell2)))
-  (multiple-value-bind (lat1 lng1)
-      (h3:cell-to-lat-lng-degrees cell1)
+  (let* ((cell1 #16r8f2830828052d25)
+         (cell2 #16r8f283082a30e623)
+         (ll1 (h3:cell-to-lat-lng-degrees cell1))
+         (ll2 (h3:cell-to-lat-lng-degrees cell2))
+
+         (lat1 (car ll1))
+         (lng1 (cdr ll1))
+         (lat2 (car ll2))
+         (lng2 (cdr ll2))
+
+         (grid-dist (h3:grid-distance cell1
+                                      cell2))
+         (hav-diff (h3:haversine-distance
+                    (degs-to-rads lat1)
+                    (degs-to-rads lng1)
+                    (degs-to-rads lat2)
+                    (degs-to-rads lng2))))
+
+    (format t "~%lat1 ~a~% lng1 ~a~%" lat1 lng1)
+    (format t "lat2 ~a~% lng2 ~a~%" lat2 lng2)
+    (format t "havdiff ~a~%" hav-diff)
+
+    (is (= 2340 grid-dist))
+
     (is (fnear 37.77523588 lat1))
     (is (fnear -122.419755 lng1))
 
-    (multiple-value-bind (lat2 lng2)
-        (h3:cell-to-lat-lng-degrees cell2)
-
-      (is (fnear lat2 37.7899905289064))
-      (is (fnear lng2 -122.40212077170318))
-      (format t "~%lat1 ~a~% lng1 ~a~%" lat1 lng1)
-      (format t "lat2 ~a~% lng2 ~a~%" lat2 lng2)
-      (let ((hav-diff (h3:haversine-distance
-                                (deg2rad lat1)
-                                (deg2rad lng1)
-                                (deg2rad lat2)
-                                (deg2rad lng2))))
-      (format t "havdiff ~a~%" hav-diff)
-      (is (fnear
-           2.256853
-           hav-diff)
-           ))))))
+    (is (fnear lat2 37.7899905289064))
+    (is (fnear lng2 -122.40212077170318))
+    (is (fnear 2.256853 hav-diff))
+    ))
 
 (test edge-test
   (let* ((origin      #16r8a2a1072b59ffff)
@@ -71,21 +75,59 @@
       for pt in pts
       do
          (let ((lat-found (find (car pt) expected
-                                :key (compose #'deg2rad #'car)
+                                :key (compose #'degs-to-rads #'car)
                                 :test #'fnear))
                (lng-found (find (cdr pt) expected
-                                :key (compose #'deg2rad #'cdr)
+                                :key (compose #'degs-to-rads #'cdr)
                                 :test #'fnear)))
            (is (not (null lat-found)))
            (is (not (null lng-found)))))))
 
-(test neighbors-tets
+(test neighbors-test
   (let* ((indexed #16R8a2a1072b59ffff)
          (k 2)
          (max-neighbors (h3:max-grid-disk-size k))
-         (neighbors (h3:grid-disk indexed k)))
+         (neighbors (h3:grid-disk indexed k))
+         (expected '(#16r8A2A1072B59FFFF
+                     #16r8A2A1072B597FFF
+                     #16r8A2A1070C96FFFF
+                     #16r8A2A1072B4B7FFF
+                     #16r8A2A1072B4A7FFF
+                     #16r8A2A1072B58FFFF
+                     #16r8A2A1072B587FFF
+                     #16r8A2A1072B5B7FFF
+                     #16r8A2A1072A2CFFFF
+                     #16r8A2A1070C967FFF
+                     #16r8A2A1070C947FFF
+                     #16r8A2A1070C94FFFF
+                     #16r8A2A1072B497FFF
+                     #16r8A2A1072B487FFF
+                     #16r8A2A1072B4AFFFF
+                     #16r8A2A1072B417FFF
+                     #16r8A2A1072B437FFF
+                     #16r8A2A1072B5AFFFF
+                     #16r8A2A1072B5A7FFF)))
     (format t "Max neighbors size ~a: ~a~%" k max-neighbors)
     (format t "Real neighbors size ~a~%" (length neighbors))
     (format t "Neighbors to ~x:~%" indexed)
     (loop for neigh in neighbors do
-      (format t "    ~x distance ~a~%" neigh (h3:grid-distance indexed neigh)))))
+      (setf expected (remove neigh expected))
+      (format t "    ~x distance ~a~%" neigh (h3:grid-distance indexed neigh)))
+    (is (null expected))))
+
+(test index-test
+  (let* ((lat (h3:degs-to-rads 40.689167))
+         (lng (h3:degs-to-rads -74.044444))
+         (resolution 10)
+         (indexed (h3:lat-lng-to-cell lat lng resolution))
+         (boundary (h3:cell-to-boundary indexed))
+         (ll (h3:cell-to-lat-lng indexed)))
+    (is (fnear (car ll) lat))
+    (is (fnear (cdr ll) lng))
+    (format t "~%cell: ~x~%boundary:" indexed)
+    (loop
+      for (lat . lng) in boundary
+      do
+         (format t "~a ~a~%" (h3:rads-to-degs lat) (h3:rads-to-degs lng)))
+    (format t "Center ~a ~a~%" (h3:rads-to-degs (car ll)) (h3:rads-to-degs (cdr ll)))))
+    
