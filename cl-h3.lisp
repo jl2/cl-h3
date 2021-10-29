@@ -96,7 +96,7 @@
       (loop
         for i below count
         for offset = (* (cffi:foreign-type-size :uint64) i)
-        for val = (cffi:mem-ref in-set :uint64 offset)
+        for val = (cffi:mem-ref out-set :uint64 offset)
         when (not (zerop val))
           collect val))))
 
