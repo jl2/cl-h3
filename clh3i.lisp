@@ -23,15 +23,16 @@
 (defpackage :clh3i
   (:nicknames)
   (:use #:cl #:j-utils #:alexandria)
-  (:export #:lat-lng
-           #:uint64-t
-           #:cell-boundary
-           #:hindex
-           #:directed-edge-to-boundary
-           #:cell-boundary.num-verts
-           #:cell-boundary.verts[]
-           #:lat-lng.lat
-           #:lat-lng.lng))
+  (:export ;; #:lat-lng
+           ;; #:uint64-t
+           ;; #:cell-boundary
+           ;; #:hindex
+           ;; #:directed-edge-to-boundary
+           ;; #:cell-boundary.num-verts
+           ;; #:cell-boundary.verts[]
+           ;; #:lat-lng.lat
+           ;; #:lat-lng.lng
+           ))
 
 (in-package :clh3i)
 

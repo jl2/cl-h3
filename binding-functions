@@ -31,9 +31,6 @@ gridDiskDistances
 gridDistance
 gridPathCells
 gridRingUnsafe
-
-h3SetToMultiPolygon
-h3ToString
 isPentagon
 isResClassIII
 isValidCell
@@ -41,8 +38,13 @@ isValidDirectedEdge
 isValidVertex
 latLngToCell
 originToDirectedEdges
-polygonToCells
 radsToDegs
 stringToH3
+h3ToString
 uncompactCells
 vertexToLatLng
+
+
+polygonToCells
+h3SetToMultiPolygon
+
