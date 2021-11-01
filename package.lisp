@@ -21,6 +21,7 @@
 
   (:use #:cl #:j-utils #:alexandria)
   (:export
+   #:h3-to-string
    #:lat-lng
    #:lat
    #:lng

@@ -24,14 +24,12 @@
 
 (setf (symbol-function 'lat-lng) #'cons)
 
-(setf (symbol-function 'cell-area-m2)
-      #'clh3i::cell-area-m2)
+(setf (symbol-function 'degs-to-rads) #'clh3i::degs-to-rads)
+(setf (symbol-function 'rads-to-degs) #'clh3i::rads-to-degs)
 
-(setf (symbol-function 'cell-area-km2)
-      #'clh3i::cell-area-km2)
-
-(setf (symbol-function 'cell-area-rads2)
-      #'clh3i::cell-area-rads2)
+(setf (symbol-function 'cell-area-m2) #'clh3i::cell-area-m2)
+(setf (symbol-function 'cell-area-km2) #'clh3i::cell-area-km2)
+(setf (symbol-function 'cell-area-rads2) #'clh3i::cell-area-rads2)
 
 (defun cell-to-boundary (index)
   (autowrap:with-many-alloc ((cell-bound 'clh3i::cell-boundary))
@@ -44,8 +42,8 @@
       collecting (lat-lng (clh3i::lat-lng.lat ll)
                        (clh3i::lat-lng.lng ll)))))
 
-(setf (symbol-function 'cell-to-center-child)
-      #'clh3i::cell-to-center-child)
+
+(setf (symbol-function 'cell-to-center-child) #'clh3i::cell-to-center-child)
 
 (defun cell-to-children (index &optional (res (h3:get-resolution index)))
   (autowrap:with-many-alloc ((child-count 'clh3i::int64-t))
@@ -113,7 +111,6 @@
         when (not (zerop val))
           collect val))))
 
-(setf (symbol-function 'degs-to-rads) #'clh3i::degs-to-rads)
 
 (defun directed-edge-to-boundary (edge)
   (autowrap:with-many-alloc ((cell-bound 'clh3i::cell-boundary))
@@ -160,9 +157,11 @@
     (setf (clh3i::lat-lng.lng b) lng2)
     (clh3i::distance-km a b)))
 
+
 (setf (symbol-function 'exact-edge-length-m) #'clh3i::exact-edge-length-m)
 (setf (symbol-function 'exact-edge-length-km) #'clh3i::exact-edge-length-km)
 (setf (symbol-function 'exact-edge-length-rads) #'clh3i::exact-edge-length-rads)
+
 
 (defun experimental-h3-to-local-ij (origin pt2)
   (autowrap:with-many-alloc ((res 'clh3i::coord-ij))
@@ -176,8 +175,8 @@
     (setf (clh3i::coord-ij.i cij) ci)
     (setf (clh3i::coord-ij.j cij) cj)
     (clh3i::experimental-local-ij-to-h3 origin cij res)
-    (cffi:mem-ref res :uint64 0)
-    ))
+    (cffi:mem-ref res :uint64 0)))
+
 
 (setf (symbol-function 'get-base-cell-number) #'clh3i::get-base-cell-number)
 (setf (symbol-function 'get-directed-edge-destination) #'clh3i::get-directed-edge-destination)
@@ -201,10 +200,13 @@
               when (>= (cffi:mem-ref faces :int offset) 0)
                 collect (cffi:mem-ref faces :int offset))))))
 
+
 (setf (symbol-function 'get-num-cells) #'clh3i::get-num-cells)
+
 
 (defun get-pentagon-count ()
   (clh3i::pentagon-count))
+
 
 (defun get-pentagons (res)
   (autowrap:with-many-alloc ((pentagons 'clh3i::h3index (clh3i::pentagon-count)))
@@ -212,6 +214,7 @@
     (loop for i below (clh3i::pentagon-count)
           for offset = (* (cffi:foreign-type-size :uint64) i)
           collect (cffi:mem-ref pentagons :uint64 offset))))
+
 
 (defun get-res-0-cell-count ()
   (clh3i::res0cell-count))
@@ -223,9 +226,10 @@
           for offset = (* (cffi:foreign-type-size :uint64) i)
           collect (cffi:mem-ref cells :uint64 offset))))
 
-(setf (symbol-function 'get-resolution) #'clh3i::get-resolution)
 
+(setf (symbol-function 'get-resolution) #'clh3i::get-resolution)
 (setf (symbol-function 'max-grid-disk-size) #'clh3i::max-grid-disk-size)
+
 
 (defun grid-disk (index k)
   (let ((max-neighbors (max-grid-disk-size k)))
@@ -292,9 +296,6 @@
         when (not (zerop cell))
           collect cell))))
 
-(defun h3-set-to-multipolygon ()
-  )
-
 (defun string-to-h3 (str)
   (autowrap:with-alloc (idx 'clh3i::h3index)
     (clh3i::string-to-h3 str idx)
@@ -310,7 +311,6 @@
 (setf (symbol-function 'is-valid-vertex) #'clh3i::is-valid-vertex)
 
 
-
 (defun lat-lng-to-cell (lat lng resolution)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng)
                              (index 'clh3i::h3index))
@@ -318,6 +318,7 @@
     (setf (clh3i::lat-lng.lng geo) lng)
     (clh3i::lat-lng-to-cell geo resolution index)
     (cffi:mem-ref index :uint64)))
+
 
 (defun origin-to-directed-edges (origin)
   (let ((max-cells 6))
@@ -330,6 +331,7 @@
         for cell = (cffi:mem-ref cells :uint64 (* (cffi:foreign-type-size :uint64) i))
         when (not (zerop cell))
           collect cell))))
+
 
 (defun polygon-to-cells (polygon res &optional (poly-holes nil))
   (autowrap:with-many-alloc ((geo-polygon 'clh3i::geo-polygon 1)
@@ -440,8 +442,6 @@
 
       ;; return list of polygons
       lisp-geo)))
-
-(setf (symbol-function 'rads-to-degs) #'clh3i::rads-to-degs)
 
 (defun uncompact-cells (compacted-set res &optional (max-cell-count 10000))
   (let ((num-compact (length compacted-set)))
