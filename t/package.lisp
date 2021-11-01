@@ -116,5 +116,3 @@
          (ll (h3:cell-to-lat-lng indexed)))
     (is (fnear (car ll) lat))
     (is (fnear (cdr ll) lng))))
-
-

@@ -17,11 +17,24 @@
 
 (in-package :cl-h3)
 
-(setf (symbol-function 'are-neighbor-cells) (symbol-function 'clh3i::are-neighbor-cells))
 
-(setf (symbol-function 'cell-area-m2) (symbol-function 'clh3i::cell-area-m2))
-(setf (symbol-function 'cell-area-km2) (symbol-function 'clh3i::cell-area-km2))
-(setf (symbol-function 'cell-area-rads2) (symbol-function 'clh3i::cell-area-rads2))
+(setf (symbol-function 'lat)
+      (symbol-function 'car))
+
+(setf (symbol-function 'lng)
+      (symbol-function 'cdr))
+
+(setf (symbol-function 'lat-lng)
+      (symbol-function 'cons))
+
+(setf (symbol-function 'cell-area-m2)
+      (symbol-function 'clh3i::cell-area-m2))
+
+(setf (symbol-function 'cell-area-km2)
+      (symbol-function 'clh3i::cell-area-km2))
+
+(setf (symbol-function 'cell-area-rads2)
+      (symbol-function 'clh3i::cell-area-rads2))
 
 (defun cell-to-boundary (index)
   (autowrap:with-many-alloc ((cell-bound 'clh3i::cell-boundary))
@@ -31,7 +44,7 @@
       for i below num-verts
       ;; TODO: Learn why this is (* 2 i)
       for ll = (clh3i::cell-boundary.verts[] cell-bound (* 2 i))
-      collecting (cons (clh3i::lat-lng.lat ll)
+      collecting (lat-lng (clh3i::lat-lng.lat ll)
                        (clh3i::lat-lng.lng ll)))))
 
 (setf (symbol-function 'cell-to-center-child)
@@ -53,13 +66,13 @@
 (defun cell-to-lat-lng (cell)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng))
     (clh3i::cell-to-lat-lng cell geo)
-    (cons (clh3i::lat-lng.lat geo)
+    (lat-lng (clh3i::lat-lng.lat geo)
           (clh3i::lat-lng.lng geo))))
 
 (defun cell-to-lat-lng-degrees (cell)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng))
     (clh3i::cell-to-lat-lng cell geo)
-    (cons (clh3i::rads-to-degs (clh3i::lat-lng.lat geo))
+    (lat-lng (clh3i::rads-to-degs (clh3i::lat-lng.lat geo))
           (clh3i::rads-to-degs (clh3i::lat-lng.lng geo)))))
 
 (defun cell-to-parent (cell parent-res)
@@ -113,13 +126,13 @@
       for i below num-verts
       ;; TODO: Learn why this is (* 2 i)
       for ll = (clh3i::cell-boundary.verts[] cell-bound (* 2 i))
-      collecting (cons (clh3i::lat-lng.lat ll)
+      collecting (lat-lng (clh3i::lat-lng.lat ll)
                        (clh3i::lat-lng.lng ll)))))
 
 (defun directed-edge-to-cells (edge)
   (autowrap:with-many-alloc ((origin-destination 'clh3i::uint64-t 2))
     (clh3i::directed-edge-to-cells edge origin-destination)
-    (cons (cffi:mem-ref origin-destination :uint64 0)
+    (lat-lng (cffi:mem-ref origin-destination :uint64 0)
           (cffi:mem-ref origin-destination :uint64 (cffi:foreign-type-size :uint64)))))
 
 
@@ -180,16 +193,16 @@
 
 
 (defun get-icosahedron-faces (edge)
-  (autowrap:with-many-alloc ((face-count 'clh3i::uint64-t))
-    (setf (cffi:mem-ref face-count :uint64 0) 0)
+  (autowrap:with-many-alloc ((face-count :int))
+    (setf (cffi:mem-ref face-count :int 0) 0)
     (clh3i::max-face-count edge face-count)
-    (let ((max-face-count (cffi:mem-ref face-count :uint64)))
-      (autowrap:with-many-alloc ((faces 'clh3i::uint64-t max-face-count))
+    (let ((max-face-count (cffi:mem-ref face-count :int)))
+      (autowrap:with-many-alloc ((faces :int max-face-count))
         (clh3i::get-icosahedron-faces edge faces)
         (loop for i below max-face-count
-              for offset = (* (cffi:foreign-type-size :uint64) i)
-              when (>= (cffi:mem-ref faces :uint64 offset) 0)
-                collect (cffi:mem-ref faces :uint64 offset))))))
+              for offset = (* (cffi:foreign-type-size :int) i)
+              when (>= (cffi:mem-ref faces :int offset) 0)
+                collect (cffi:mem-ref faces :int offset))))))
 
 (setf (symbol-function 'get-num-cells) (symbol-function 'clh3i::get-num-cells))
 
@@ -422,7 +435,7 @@
                   for vertex = (clh3i::linked-lat-lng.vertex lll)
 
                   ;; Collect ( lat . lng )
-                  collect (cons (clh3i::lat-lng.lat vertex)
+                  collect (lat-lng (clh3i::lat-lng.lat vertex)
                                 (clh3i::lat-lng.lng vertex)))))))
 
       ;; Destroy linked-geo
@@ -463,7 +476,7 @@
 (defun vertex-to-lat-lng (vertex)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng))
     (clh3i::vertex-to-lat-lng vertex geo)
-    (cons (clh3i::lat-lng.lat geo)
+    (lat-lng (clh3i::lat-lng.lat geo)
           (clh3i::lat-lng.lng geo))))
 
 

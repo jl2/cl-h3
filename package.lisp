@@ -21,6 +21,9 @@
 
   (:use #:cl #:j-utils #:alexandria)
   (:export
+   #:lat-lng
+   #:lat
+   #:lng
    #:are-neighbor-cells
    #:cell-area
    #:cell-to-boundary
