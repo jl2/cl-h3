@@ -18,23 +18,20 @@
 (in-package :cl-h3)
 
 
-(setf (symbol-function 'lat)
-      (symbol-function 'car))
+(setf (symbol-function 'lat) #'car)
 
-(setf (symbol-function 'lng)
-      (symbol-function 'cdr))
+(setf (symbol-function 'lng) #'cdr)
 
-(setf (symbol-function 'lat-lng)
-      (symbol-function 'cons))
+(setf (symbol-function 'lat-lng) #'cons)
 
 (setf (symbol-function 'cell-area-m2)
-      (symbol-function 'clh3i::cell-area-m2))
+      #'clh3i::cell-area-m2)
 
 (setf (symbol-function 'cell-area-km2)
-      (symbol-function 'clh3i::cell-area-km2))
+      #'clh3i::cell-area-km2)
 
 (setf (symbol-function 'cell-area-rads2)
-      (symbol-function 'clh3i::cell-area-rads2))
+      #'clh3i::cell-area-rads2)
 
 (defun cell-to-boundary (index)
   (autowrap:with-many-alloc ((cell-bound 'clh3i::cell-boundary))
@@ -48,7 +45,7 @@
                        (clh3i::lat-lng.lng ll)))))
 
 (setf (symbol-function 'cell-to-center-child)
-      (symbol-function 'clh3i::cell-to-center-child))
+      #'clh3i::cell-to-center-child)
 
 (defun cell-to-children (index &optional (res (h3:get-resolution index)))
   (autowrap:with-many-alloc ((child-count 'clh3i::int64-t))
@@ -93,7 +90,7 @@
           collecting (cffi:mem-ref vertexes :uint64
                                    (* (cffi:foreign-type-size :uint64) i)))))
 
-(setf (symbol-function 'cells-to-directed-edge) (symbol-function 'clh3i::cells-to-directed-edge))
+(setf (symbol-function 'cells-to-directed-edge) #'clh3i::cells-to-directed-edge)
 
 (defun compact-cells (cells)
   (let ((count (length cells)))
@@ -116,7 +113,7 @@
         when (not (zerop val))
           collect val))))
 
-(setf (symbol-function 'degs-to-rads) (symbol-function 'clh3i::degs-to-rads))
+(setf (symbol-function 'degs-to-rads) #'clh3i::degs-to-rads)
 
 (defun directed-edge-to-boundary (edge)
   (autowrap:with-many-alloc ((cell-bound 'clh3i::cell-boundary))
@@ -163,9 +160,9 @@
     (setf (clh3i::lat-lng.lng b) lng2)
     (clh3i::distance-km a b)))
 
-(setf (symbol-function 'exact-edge-length-m) (symbol-function 'clh3i::exact-edge-length-m))
-(setf (symbol-function 'exact-edge-length-km) (symbol-function 'clh3i::exact-edge-length-km))
-(setf (symbol-function 'exact-edge-length-rads) (symbol-function 'clh3i::exact-edge-length-rads))
+(setf (symbol-function 'exact-edge-length-m) #'clh3i::exact-edge-length-m)
+(setf (symbol-function 'exact-edge-length-km) #'clh3i::exact-edge-length-km)
+(setf (symbol-function 'exact-edge-length-rads) #'clh3i::exact-edge-length-rads)
 
 (defun experimental-h3-to-local-ij (origin pt2)
   (autowrap:with-many-alloc ((res 'clh3i::coord-ij))
@@ -182,14 +179,14 @@
     (cffi:mem-ref res :uint64 0)
     ))
 
-(setf (symbol-function 'get-base-cell-number) (symbol-function 'clh3i::get-base-cell-number))
-(setf (symbol-function 'get-directed-edge-destination) (symbol-function 'clh3i::get-directed-edge-destination))
-(setf (symbol-function 'get-directed-edge-origin) (symbol-function 'clh3i::get-directed-edge-origin))
+(setf (symbol-function 'get-base-cell-number) #'clh3i::get-base-cell-number)
+(setf (symbol-function 'get-directed-edge-destination) #'clh3i::get-directed-edge-destination)
+(setf (symbol-function 'get-directed-edge-origin) #'clh3i::get-directed-edge-origin)
 
-(setf (symbol-function 'get-hexagon-area-avg-km2) (symbol-function 'clh3i::get-hexagon-area-avg-km2))
-(setf (symbol-function 'get-hexagon-area-avg-m2) (symbol-function 'clh3i::get-hexagon-area-avg-m2))
-(setf (symbol-function 'get-hexagon-edge-length-avg-km) (symbol-function 'clh3i::get-hexagon-edge-length-avg-km))
-(setf (symbol-function 'get-hexagon-edge-length-avg-m) (symbol-function 'clh3i::get-hexagon-edge-length-avg-m))
+(setf (symbol-function 'get-hexagon-area-avg-km2) #'clh3i::get-hexagon-area-avg-km2)
+(setf (symbol-function 'get-hexagon-area-avg-m2) #'clh3i::get-hexagon-area-avg-m2)
+(setf (symbol-function 'get-hexagon-edge-length-avg-km) #'clh3i::get-hexagon-edge-length-avg-km)
+(setf (symbol-function 'get-hexagon-edge-length-avg-m) #'clh3i::get-hexagon-edge-length-avg-m)
 
 
 (defun get-icosahedron-faces (edge)
@@ -204,7 +201,7 @@
               when (>= (cffi:mem-ref faces :int offset) 0)
                 collect (cffi:mem-ref faces :int offset))))))
 
-(setf (symbol-function 'get-num-cells) (symbol-function 'clh3i::get-num-cells))
+(setf (symbol-function 'get-num-cells) #'clh3i::get-num-cells)
 
 (defun get-pentagon-count ()
   (clh3i::pentagon-count))
@@ -226,9 +223,9 @@
           for offset = (* (cffi:foreign-type-size :uint64) i)
           collect (cffi:mem-ref cells :uint64 offset))))
 
-(setf (symbol-function 'get-resolution) (symbol-function 'clh3i::get-resolution))
+(setf (symbol-function 'get-resolution) #'clh3i::get-resolution)
 
-(setf (symbol-function 'max-grid-disk-size) (symbol-function 'clh3i::max-grid-disk-size))
+(setf (symbol-function 'max-grid-disk-size) #'clh3i::max-grid-disk-size)
 
 (defun grid-disk (index k)
   (let ((max-neighbors (max-grid-disk-size k)))
@@ -306,11 +303,11 @@
 (defun h3-to-string (index)
   (format nil "~x" index))
 
-(setf (symbol-function 'is-pentagon) (symbol-function 'clh3i::is-pentagon))
-(setf (symbol-function 'is-valid-cell) (symbol-function 'clh3i::is-valid-cell))
-(setf (symbol-function 'is-res-class-iii) (symbol-function 'clh3i::is-res-class-iii))
-(setf (symbol-function 'is-valid-directed-edge) (symbol-function 'clh3i::is-valid-directed-edge))
-(setf (symbol-function 'is-valid-vertex) (symbol-function 'clh3i::is-valid-vertex))
+(setf (symbol-function 'is-pentagon) #'clh3i::is-pentagon)
+(setf (symbol-function 'is-valid-cell) #'clh3i::is-valid-cell)
+(setf (symbol-function 'is-res-class-iii) #'clh3i::is-res-class-iii)
+(setf (symbol-function 'is-valid-directed-edge) #'clh3i::is-valid-directed-edge)
+(setf (symbol-function 'is-valid-vertex) #'clh3i::is-valid-vertex)
 
 
 
@@ -444,7 +441,7 @@
       ;; return list of polygons
       lisp-geo)))
 
-(setf (symbol-function 'rads-to-degs) (symbol-function 'clh3i::rads-to-degs))
+(setf (symbol-function 'rads-to-degs) #'clh3i::rads-to-degs)
 
 (defun uncompact-cells (compacted-set res &optional (max-cell-count 10000))
   (let ((num-compact (length compacted-set)))
