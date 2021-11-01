@@ -37,15 +37,18 @@
 (setf (symbol-function 'cell-to-center-child)
       (symbol-function 'clh3i::cell-to-center-child))
 
-(defun cell-to-children (index res)
-  (autowrap:with-many-alloc ((child-count 'clh3i::uint64-t))
+(defun cell-to-children (index &optional (res (h3:get-resolution index)))
+  (autowrap:with-many-alloc ((child-count 'clh3i::int64-t))
     (clh3i::cell-to-children-size index res child-count)
-    (let ((child-count (cffi:mem-ref child-count :uint64)))
-      (autowrap:with-many-alloc ((children 'clh3i::uint64-t child-count))
+    (let ((child-count (cffi:mem-ref child-count :int64)))
+      (autowrap:with-many-alloc ((children 'clh3i:h3index child-count))
         (clh3i::cell-to-children index res children)
         (loop
           for i below child-count
-          collecting (cffi:mem-ref children :uint64 (* (cffi:foreign-type-size :uint64) i)))))))
+          for offset = (* (cffi:foreign-type-size :uint64) i)
+          for cell = (cffi:mem-ref children :uint64 offset)
+          when (not (zerop cell))
+          collecting cell)))))
 
 (defun cell-to-lat-lng (cell)
   (autowrap:with-many-alloc ((geo 'clh3i::lat-lng))
@@ -187,7 +190,7 @@
               for offset = (* (cffi:foreign-type-size :uint64) i)
               when (>= (cffi:mem-ref faces :uint64 offset) 0)
                 collect (cffi:mem-ref faces :uint64 offset))))))
-                
+
 (setf (symbol-function 'get-num-cells) (symbol-function 'clh3i::get-num-cells))
 
 (defun get-pentagon-count ()
@@ -326,7 +329,7 @@
     (setf (clh3i::geo-loop.num-verts (clh3i::geo-polygon.geoloop geo-polygon))
           (length polygon))
     (setf (clh3i::geo-loop.verts (clh3i::geo-polygon.geoloop geo-polygon))
-          (clh3i::geo-polygon-ptr verts))
+          (clh3i::lat-lng-ptr verts))
     (loop
       for i below (length polygon)
       for pt in polygon
@@ -339,7 +342,7 @@
          (setf (clh3i::lat-lng.lng lat-lng) lng))
 
     (setf (clh3i::geo-polygon.num-holes geo-polygon) (length poly-holes))
-    (setf (clh3i::geo-polygon.holes geo-polygon) holes)
+    (setf (clh3i::geo-polygon.holes geo-polygon) (clh3i::geo-loop-ptr holes))
     (loop
       for i below (length poly-holes)
       for hole in poly-holes
@@ -347,7 +350,7 @@
       for loop-ptr = (autowrap:alloc 'clh3i::geo-loop 1)
       for hole-loop = (clh3i::make-geo-loop :ptr loop-ptr)
       do
-         (setf (cffi:mem-ref holes :pointer offset) loop-ptr)
+         (setf (cffi:mem-ref (clh3i::geo-loop-ptr holes) :pointer offset) loop-ptr)
          (setf (clh3i::geo-loop.num-verts hole-loop) (length hole))
          (setf (clh3i::geo-loop.verts hole-loop) (autowrap:alloc 'clh3i::lat-lng (length hole)))
          (loop
@@ -374,6 +377,9 @@
 
 
 (defun h3-set-to-multi-polygon (h3set)
+  (when (null h3set)
+    (return-from h3-set-to-multi-polygon  nil))
+
   (autowrap:with-many-alloc ((cells 'clh3i::h3index (length h3set))
                              (lgp 'clh3i::linked-geo-polygon 1))
       ;; Fill in C array
@@ -388,8 +394,9 @@
       (clh3i::h3set-to-linked-geo cells (length h3set) lgp)
 
       ;; Unpack linked-geo into lisp-geo list
+
+      (let ((lisp-geo
       ;; Loop over LinkedGeoPolygon
-    (let ((lisp-geo
             (loop
               for gp = lgp
                 then (if (cffi:pointer-eq (cffi:null-pointer) (clh3i::linked-geo-polygon.next gp))

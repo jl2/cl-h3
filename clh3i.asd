@@ -1,7 +1,6 @@
-;; cl-h3.test.asd
+;; clh3i.asd
 ;;
 ;; Copyright (c) 2021 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
-
 
 ;; Permission to use, copy, modify, and/or distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -15,20 +14,13 @@
 ;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(in-package :cl-user)
-(defpackage :cl-h3.test-asd
-  (:use :cl :asdf))
-(in-package :cl-h3.test-asd)
-
-(asdf:defsystem #:cl-h3.test
-  :description "Test cl-h3"
+(asdf:defsystem #:clh3i
+  :description "Describe cl-h3 here"
   :author "Jeremiah LaRocco <jeremiah_larocco@fastmail.com>"
   :license  "ISC"
   :version "0.0.1"
   :serial t
-  :depends-on ( :cl-h3 :fiveam)
-  :components ((:module "t"
-                :components
-                ((:file "package")
-                 (:file "basic"))))
-  :perform (test-op :after (op c) (eval (read-from-string "(every #'fiveam::TEST-PASSED-P (5am:run :cl-h3))"))))
+  :depends-on (#:cffi #:cl-autowrap/libffi #:alexandria #:j-utils)
+  :components ((:module "specs")
+               (:file "clh3i"))
+  :in-order-to ((test-op (test-op cl-h3.test))))

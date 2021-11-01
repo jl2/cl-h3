@@ -1,16 +1,118 @@
-
 * cl-h3
+
 ** About
-This is a project to do something.
+cl-h3 is a Common Lisp binding to Uber's [[https://github.com/uber/h3][H3 library]], "A Hexagonal Hierarchical Geospatial Indexing System".
+
+** Getting Started
+
+Install the H3 library by following the instructions on the [[https://github.com/uber/h3][H3 GitHub Page]].
+
+These bindings assume H3 is built as a shared library and installed into a location where the shared library can be loaded into the Lisp image, probably /usr/local/lib/ or something like that.  To point at a different H3 library (a local developer build, for example) update [[clh3i.lisp]] as necessary.
+
+Once H3 is installed (or [[clh3i.lisp]] update appropriately), clone this repo into "~/quicklisp/local-projects/" or another directory where QuickLisp can find it.
+
+#+begin_src bash
+  cd ~/quicklisp/local-projects/
+  git clone https://github.com/jl2/cl-h3.git
+#+end_src
+
+Next, start Lisp and run:
+
+#+begin_src lisp :results output
+  (ql:quickload :cl-h3)
+
+  (let* ((lat-dec 37.7752702151959d0)
+         (lng-dec -122.418307270836d0)
+         (lat-rad (h3:degs-to-rads lat-dec))
+         (lng-rad (h3:degs-to-rads lng-dec)))
+    (format t "Zooming into (~a ~a)~%~{#16r~x~%~}~%"
+            lat-dec lng-dec
+            (loop
+              for res below 16
+              collecting
+              (h3:lat-lng-to-cell lat-rad lng-rad res)))
+
+    (let* ((res 10)
+           (index (h3:lat-lng-to-cell lat-rad lng-rad res))
+           (distance 2))
+      (format t "Grid around #16r~x at resolution ~a:~%~{#16r~x~%~}~%"
+              index
+              res
+              (h3:grid-disk index 2))))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+To load "cl-h3":
+  Load 1 ASDF system:
+    cl-h3
+; Loading "cl-h3"
+[package clh3i]...................................
+..................................................
+..................................................
+..................................................
+..................................................
+..; Total of 5 load-time skipped definitions:
+;   QECVT QFCVT QGCVT STRTOLD _FLOAT64X 
+; Total of 1 load-time missing entities:
+;   AUTOWRAP::LONG-DOUBLE 
+................................................
+[package cl-h3].....
+Zooming into (37.7752702151959D0 -122.418307270836D0)
+#16r8029FFFFFFFFFFF
+#16r81283FFFFFFFFFF
+#16r822837FFFFFFFFF
+#16r832830FFFFFFFFF
+#16r8428309FFFFFFFF
+#16r85283083FFFFFFF
+#16r86283082FFFFFFF
+#16r872830828FFFFFF
+#16r8828308281FFFFF
+#16r8928308280FFFFF
+#16r8A28308280E7FFF
+#16r8B28308280E6FFF
+#16r8C28308280E6DFF
+#16r8D28308280E6C7F
+#16r8E28308280E6C5F
+#16r8F28308280E6C59
+
+Grid around #16r8A28308280E7FFF at resolution 10:
+#16r8A28308280E7FFF
+#16r8A283082801FFFF
+#16r8A28308280F7FFF
+#16r8A28308280C7FFF
+#16r8A28308280EFFFF
+#16r8A2830828057FFF
+#16r8A283082800FFFF
+#16r8A2830828007FFF
+#16r8A2830828017FFF
+#16r8A28308280AFFFF
+#16r8A283082808FFFF
+#16r8A28308280D7FFF
+#16r8A28308280DFFFF
+#16r8A28308280CFFFF
+#16r8A28308283B7FFF
+#16r8A283082805FFFF
+#16r8A2830828047FFF
+#16r8A2830828077FFF
+#16r8A283082802FFFF
+
+#+end_example
+
+** Goals
+The goal of this project is to provide full bindings to the H3 C library, as well some features from the Java, Python and JavaScript bindings.
+
+** TODO
+*** Create tests based on tests for other bindings.
+*** Implement any extra functionality in other bindings.
+*** Match function names from other bindings
+*** Ask about version H3 v4.0.0 in Slack channel
+*** Documentation
+*** Code cleanup
 
 ** License
 ISC
 
-
 Copyright (c) 2021 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
 
 
-
-
-* Plan
-** TODO Fill in a TODO list.

@@ -24,11 +24,11 @@
 
 (in-package :cl-h3.test)
 
-(def-suite :cl-h3)
-(in-suite :cl-h3)
-
 (defun fnear (a b &optional (eps 0.0001))
   (< (abs (- b a)) eps))
+
+(def-suite :h3-old-tests)
+(in-suite :h3-old-tests)
 
 (test distance-test
   (let* ((cell1 #16r8f2830828052d25)
@@ -48,10 +48,6 @@
                     (degs-to-rads lng1)
                     (degs-to-rads lat2)
                     (degs-to-rads lng2))))
-
-    (format t "~%lat1 ~a~% lng1 ~a~%" lat1 lng1)
-    (format t "lat2 ~a~% lng2 ~a~%" lat2 lng2)
-    (format t "havdiff ~a~%" hav-diff)
 
     (is (= 2340 grid-dist))
 
@@ -107,12 +103,8 @@
                      #16r8A2A1072B437FFF
                      #16r8A2A1072B5AFFFF
                      #16r8A2A1072B5A7FFF)))
-    (format t "Max neighbors size ~a: ~a~%" k max-neighbors)
-    (format t "Real neighbors size ~a~%" (length neighbors))
-    (format t "Neighbors to ~x:~%" indexed)
     (loop for neigh in neighbors do
-      (setf expected (remove neigh expected))
-      (format t "    ~x distance ~a~%" neigh (h3:grid-distance indexed neigh)))
+      (setf expected (remove neigh expected)))
     (is (null expected))))
 
 (test index-test
@@ -123,11 +115,6 @@
          (boundary (h3:cell-to-boundary indexed))
          (ll (h3:cell-to-lat-lng indexed)))
     (is (fnear (car ll) lat))
-    (is (fnear (cdr ll) lng))
-    (format t "~%cell: ~x~%boundary:" indexed)
-    (loop
-      for (lat . lng) in boundary
-      do
-         (format t "~a ~a~%" (h3:rads-to-degs lat) (h3:rads-to-degs lng)))
-    (format t "Center ~a ~a~%" (h3:rads-to-degs (car ll)) (h3:rads-to-degs (cdr ll)))))
-    
+    (is (fnear (cdr ll) lng))))
+
+

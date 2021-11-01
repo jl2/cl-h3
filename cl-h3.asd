@@ -21,9 +21,7 @@
   :license  "ISC"
   :version "0.0.1"
   :serial t
-  :depends-on (#:cffi #:cl-autowrap/libffi #:alexandria #:j-utils)
-  :components ((:module "specs")
-               (:file "clh3i")
-               (:file "package")
+  :depends-on (#:clh3i #:cffi #:cl-autowrap/libffi #:alexandria #:j-utils)
+  :components ((:file "package")
                (:file "cl-h3"))
   :in-order-to ((test-op (test-op cl-h3.test))))

@@ -1,5 +1,4 @@
-;; cl-h3.lisp
-;;
+;; clh3i.lisp
 ;; Copyright (c) 2021 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
 
 ;; Permission to use, copy, modify, and/or distribute this software for any
@@ -43,12 +42,12 @@
 (cffi:use-foreign-library h3-lib)
 
 (autowrap:c-include
- #+darwin"/usr/local/include/h3/h3api.h"
- #+linux"/usr/local/include/h3/h3api.h"
+ #+darwin"h3/h3api.h"
+ #+linux"h3/h3api.h"
  :sysincludes (list #+linux"/usr/include/x86_64-linux-gnu/"
                     #+linux"/usr/include/x86_64-linux-gnu/c++/9/"
                     #+darwin"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/")
- :spec-path '(cl-h3 specs)
+ :spec-path '(clh3i specs)
  :trace-c2ffi t
  :exclude-definitions
  ("^va_list$"
