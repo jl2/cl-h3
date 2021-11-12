@@ -21,6 +21,11 @@
 
   (:use #:cl #:j-utils #:alexandria)
   (:export
+   #:show-decoded-h3-index
+
+   #:d2r
+   #:r2d
+
    #:h3-to-string
    #:lat-lng
    #:lat
@@ -63,6 +68,7 @@
    #:get-resolution
    #:grid-disk
    #:grid-disk-distances
+   #:grid-disks-unsafe
    #:grid-distance
    #:grid-path-cells
    #:grid-ring-unsafe
@@ -75,6 +81,7 @@
    #:is-valid-directed-edge
    #:is-valid-vertex
    #:lat-lng-to-cell
+   #:latlng-to-cell
    #:max-grid-disk-size
    #:origin-to-directed-edges
    #:polygon-to-cells

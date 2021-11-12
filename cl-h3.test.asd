@@ -31,5 +31,6 @@
                 :components
                 ((:file "package")
                  (:file "basic")
-                 (:file "cells-edges"))))
+                 (:file "cells-edges")
+                 (:file "h3"))))
   :perform (test-op :after (op c) (eval (read-from-string "(every #'fiveam::TEST-PASSED-P (5am:run :cl-h3))"))))

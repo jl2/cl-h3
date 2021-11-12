@@ -24,8 +24,18 @@
 
 (in-package :cl-h3.test)
 
-(defun fnear (a b &optional (eps 0.0001))
+(defgeneric fnear (a b &optional eps))
+
+(defmethod fnear ((a number) (b number) &optional (eps 0.0001))
   (< (abs (- b a)) eps))
+
+(defmethod fnear ((a cons) (b cons) &optional (eps 0.0001))
+  (and (fnear (car a) (car b) eps)
+       (fnear (cdr a) (cdr b) eps)))
+
+(defmethod r2d ((radians cons))
+  (h3:lat-lng (r2d (car radians))
+              (r2d (cdr radians))))
 
 (def-suite :h3-old-tests)
 (in-suite :h3-old-tests)

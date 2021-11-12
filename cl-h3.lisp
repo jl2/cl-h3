@@ -17,6 +17,32 @@
 
 (in-package :cl-h3)
 
+(defun extract (num pos len)
+  (loop
+    for i below len
+    summing (ash (if (logbitp (+ pos i) num) 1 0) i)))
+
+(defun show-decoded-h3-index (idx &optional (stream t))
+  (flet ((show-field-data (name offset bits)
+           (let ((value (extract idx offset bits)))
+             (format stream "~(~16,a~): ~8d 0x~2,'0x b~8,'0b~%" name value value value))))
+    (let ((fields '((:reserved #16r3f 1)
+                    (:mode #16r3b 4)
+                    (:mode-data #16r38 3)
+                    (:resolution  #16r34 4)
+                    (:base-cell #16r2d 8)))
+          (first-digit-offset #16r2a))
+      (loop
+        for (name offset bits) in fields
+        do
+           (show-field-data name offset bits))
+      (loop
+        for i from 1
+        for digit-offset from first-digit-offset downto 0 by 3
+        do
+           (show-field-data (format nil "digit-~a" i)
+                            digit-offset
+                            3)))))
 
 (setf (symbol-function 'lat) #'car)
 
@@ -26,6 +52,22 @@
 
 (setf (symbol-function 'degs-to-rads) #'clh3i::degs-to-rads)
 (setf (symbol-function 'rads-to-degs) #'clh3i::rads-to-degs)
+
+(defgeneric r2d (radians))
+(defmethod r2d ((radians number))
+  (/ (* 180 radians) pi))
+
+(defmethod r2d ((radians cons))
+  (h3:lat-lng (r2d (car radians))
+              (r2d (cdr radians))))
+
+(defgeneric d2r (degrees))
+(defmethod d2r ((degrees number))
+  (/ (* pi degrees) 180))
+
+(defmethod d2r ((degrees cons))
+  (h3:lat-lng (d2r (car degrees))
+              (d2r (cdr degrees))))
 
 (setf (symbol-function 'cell-area-m2) #'clh3i::cell-area-m2)
 (setf (symbol-function 'cell-area-km2) #'clh3i::cell-area-km2)
@@ -284,6 +326,30 @@
         when (not (zerop cell))
           collect cell))))
 
+(defun grid-disks-unsafe (h3set k)
+  (let* ((in-size (length h3set))
+         (max-neighbors (* in-size (max-grid-disk-size k))))
+    (autowrap:with-many-alloc ((neighbors 'clh3i::h3index max-neighbors)
+                               (ch3set 'clh3i::h3index in-size))
+      (loop
+        for i below in-size
+        for offset = (* (cffi:foreign-type-size :uint64) i)
+        for cell in h3set
+        do
+           (setf (cffi:mem-ref ch3set :uint64 offset) cell))
+      (loop
+        for i below max-neighbors
+        do
+           (setf (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i)) 0))
+
+      (clh3i::grid-disks-unsafe ch3set in-size k neighbors)
+
+      (loop
+        for i below max-neighbors
+        for neigh = (cffi:mem-ref neighbors :uint64 (* (cffi:foreign-type-size :uint64) i))
+        when (not (zerop neigh))
+          collect neigh))))
+
 (defun grid-ring-unsafe (index k)
   (let ((max-cells (if (zerop k) 1 (* 6 k))))
     (autowrap:with-alloc (cells 'clh3i::h3index max-cells)
@@ -319,6 +385,13 @@
     (clh3i::lat-lng-to-cell geo resolution index)
     (cffi:mem-ref index :uint64)))
 
+(defun latlng-to-cell (latlng resolution)
+  (autowrap:with-many-alloc ((geo 'clh3i::lat-lng)
+                             (index 'clh3i::h3index))
+    (setf (clh3i::lat-lng.lat geo) (lat latlng))
+    (setf (clh3i::lat-lng.lng geo) (lng latlng))
+    (clh3i::lat-lng-to-cell geo resolution index)
+    (cffi:mem-ref index :uint64)))
 
 (defun origin-to-directed-edges (origin)
   (let ((max-cells 6))
@@ -348,7 +421,9 @@
       for lat = (car pt)
       for lng = (cdr pt)
       for offset = (* (autowrap:foreign-type-size 'clh3i::lat-lng) i)
-      for lat-lng = (clh3i::make-lat-lng :ptr (cffi:inc-pointer (clh3i::geo-loop.verts (clh3i::geo-polygon.geoloop geo-polygon)) offset))
+      for lat-lng = (clh3i::make-lat-lng :ptr (cffi:inc-pointer
+                                               (clh3i::geo-loop.verts (clh3i::geo-polygon.geoloop geo-polygon))
+                                               offset))
       do
          (setf (clh3i::lat-lng.lat lat-lng) lat)
          (setf (clh3i::lat-lng.lng lat-lng) lng))
@@ -360,18 +435,20 @@
       for hole in poly-holes
       for offset = (* (autowrap:foreign-type-size 'clh3i::geo-loop) i)
       for loop-ptr = (autowrap:alloc 'clh3i::geo-loop 1)
-      for hole-loop = (clh3i::make-geo-loop :ptr loop-ptr)
       do
          (setf (cffi:mem-ref (clh3i::geo-loop-ptr holes) :pointer offset) loop-ptr)
-         (setf (clh3i::geo-loop.num-verts hole-loop) (length hole))
-         (setf (clh3i::geo-loop.verts hole-loop) (autowrap:alloc 'clh3i::lat-lng (length hole)))
+         (setf (clh3i::geo-loop.num-verts (autowrap:ptr loop-ptr)) (length hole))
+         (setf (clh3i::geo-loop.verts (autowrap:ptr loop-ptr))
+               (autowrap:alloc 'clh3i::lat-lng (length hole)))
          (loop
            for i below (length hole)
            for pt in hole
            for lat = (car pt)
            for lng = (cdr pt)
            for offset = (* (autowrap:foreign-type-size 'clh3i::lat-lng) i)
-           for lat-lng = (clh3i::make-lat-lng :ptr (cffi:inc-pointer (clh3i::geo-loop.verts hole-loop) offset))
+           for lat-lng = (clh3i::make-lat-lng
+                          :ptr (cffi:inc-pointer
+                                loop-ptr offset))
            do
               (setf (clh3i::lat-lng.lat lat-lng) lat)
               (setf (clh3i::lat-lng.lng lat-lng) lng)))
